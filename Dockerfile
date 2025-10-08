@@ -1,11 +1,13 @@
 # Use a stable and lightweight Python image
 FROM python:3.11-slim
 
-# Install system dependencies (required for Pillow, OpenCV, and Vulkan runtime)
+# Install system dependencies (required for Pillow, Vulkan runtime, OpenMP)
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
-		libgomp1 \
+    libgomp1 \
+    libvulkan1 \
+    mesa-vulkan-drivers \
     wget \
     unzip \
     && rm -rf /var/lib/apt/lists/*
@@ -13,11 +15,12 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for better build caching)
+# Copy requirements first (for caching)
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Download and install RealSR NCNN Vulkan binaries and models
 RUN mkdir /tools && cd /tools && \
@@ -32,8 +35,8 @@ RUN mkdir /tools && cd /tools && \
 # Copy application source code
 COPY ./app /app
 
-# Expose app port
+# Expose application port
 EXPOSE 8080
 
-# Start the FastAPI server
+# Run FastAPI with uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
