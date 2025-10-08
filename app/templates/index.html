@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Image Enhancer</title>
   <style>
     body {
@@ -9,25 +10,35 @@
       background: #faf9f6;
       color: #222;
       text-align: center;
-      padding: 40px;
+      padding: 40px 20px;
+      margin: 0;
     }
     h1 {
       font-size: 1.8em;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #444;
+      margin-bottom: 25px;
     }
     input[type="file"] {
-      margin: 10px 0;
+      margin: 15px 0;
     }
     button {
       background: #704214;
       color: white;
       border: none;
       padding: 10px 20px;
+      font-size: 1em;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
+      transition: 0.2s ease;
     }
     button:hover {
       background: #5c3610;
+    }
+    #result {
+      margin-top: 25px;
     }
     img {
       margin-top: 20px;
@@ -35,25 +46,33 @@
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 10px;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>AI Image Enhancer</h1>
-  <p>Upload any photo — face, scenery, blurry shot — and see it become crisp.</p>
+  <p>Upload any photo — blurry or low-quality — and see it turn crystal clear ✨</p>
+
   <form id="upload-form">
     <input type="file" id="file" accept="image/*" required>
     <br>
     <button type="submit">Enhance Image</button>
   </form>
+
   <div id="result"></div>
 
   <script>
     const form = document.getElementById("upload-form");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const fileInput = document.getElementById("file");
       const file = fileInput.files[0];
-      if (!file) return alert("Please select an image");
+      if (!file) return alert("Please select an image first.");
 
       const formData = new FormData();
       formData.append("file", file);
@@ -61,17 +80,15 @@
       const resultDiv = document.getElementById("result");
       resultDiv.innerHTML = "<p>Processing... Please wait ⏳</p>";
 
-      const res = await fetch("/enhance", {
-        method: "POST",
-        body: formData,
-      });
+      try {
+        const res = await fetch("/enhance", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Enhancement failed.");
 
-      if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        resultDiv.innerHTML = `<h3>Enhanced Image:</h3><img src="${url}" alt="Enhanced Image">`;
-      } else {
-        resultDiv.innerHTML = "<p style='color:red;'>Failed to enhance image.</p>";
+        resultDiv.innerHTML = `<h3>Enhanced Image:</h3><img src="${url}" alt="Enhanced Image" />`;
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">❌ ${err.message}</p>`;
       }
     });
   </script>
