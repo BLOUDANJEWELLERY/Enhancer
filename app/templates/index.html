@@ -82,6 +82,14 @@
 
       try {
         const res = await fetch("/enhance", { method: "POST", body: formData });
+
+        // Try to parse JSON first (error message), fallback to blob if ok
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          throw new Error(data.error || "Enhancement failed.");
+        }
+
         if (!res.ok) throw new Error("Enhancement failed.");
 
         const blob = await res.blob();
