@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Image Enhancer</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #faf9f6;
+      color: #222;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      background: #704214;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #5c3610;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 95%;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Image Enhancer</h1>
+  <p>Upload any photo — face, scenery, blurry shot — and see it become crisp.</p>
+  <form id="upload-form">
+    <input type="file" id="file" accept="image/*" required>
+    <br>
+    <button type="submit">Enhance Image</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById("upload-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("file");
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select an image");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "<p>Processing... Please wait ⏳</p>";
+
+      const res = await fetch("/enhance", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        resultDiv.innerHTML = `<h3>Enhanced Image:</h3><img src="${url}" alt="Enhanced Image">`;
+      } else {
+        resultDiv.innerHTML = "<p style='color:red;'>Failed to enhance image.</p>";
+      }
+    });
+  </script>
+</body>
+</html>
