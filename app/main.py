@@ -30,39 +30,31 @@ async def home(request: Request):
 
 @app.post("/enhance")
 async def enhance_image(file: UploadFile = File(...)):
-    """Handle image upload and enhancement using RealSR"""
-    # Save input
     input_filename = f"{uuid.uuid4()}_{file.filename}"
     input_path = os.path.join(UPLOAD_DIR, input_filename)
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
-    # Prepare output path
     output_filename = f"enhanced_{input_filename}.png"
     output_path = os.path.join(OUTPUT_DIR, output_filename)
 
-    # RealSR binary + model paths
-    realsr_bin = "/usr/local/bin/realsr-ncnn-vulkan"
-    model_dir = "/usr/local/bin/models-DF2K_JPEG"
-
-    # Run enhancement
     try:
-        subprocess.run(
-            [
-                realsr_bin,
-                "-i", input_path,
-                "-o", output_path,
-                "-s", "4",        # upscale factor
-                "-m", model_dir   # model directory
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+        result = subprocess.run(
+            ["realsr-ncnn-vulkan", "-i", input_path, "-o", output_path, "-s", "4"],
+            capture_output=True,
+            text=True,
+            check=True
         )
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
     except subprocess.CalledProcessError as e:
-        return JSONResponse(
-            {"error": f"RealSR failed: {e.stderr.decode('utf-8')}"},
-            status_code=500
-        )
+        print("ERROR:", e.stderr)
+        return {"error": f"Enhancement failed: {e.stderr}"}
+    except Exception as e:
+        print("GENERAL ERROR:", str(e))
+        return {"error": str(e)}
+
+    if not os.path.exists(output_path):
+        return {"error": "Output file not created — enhancement may have failed."}
 
     return FileResponse(output_path, media_type="image/png", filename=output_filename)
